@@ -276,7 +276,7 @@ function updateTray() {
 
 function createTray() {
   try {
-    const iconPath = path.join(__dirname, 'tray-icon.png');
+    const iconPath = path.join(__dirname, 'Tray-icon.png');
     const icon = nativeImage.createFromPath(iconPath);
     icon.setTemplateImage(false);
     tray = new Tray(icon);

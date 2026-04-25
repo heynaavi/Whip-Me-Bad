@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://em-content.zobj.net/source/apple/391/peach_1f351.png" width="80" />
+  <img src="logo.png" width="120" />
 </p>
 
 <h1 align="center">Whip Me Bad</h1>
