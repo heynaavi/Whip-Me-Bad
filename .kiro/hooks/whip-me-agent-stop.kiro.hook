@@ -8,7 +8,7 @@
   },
   "then": {
     "type": "runCommand",
-    "command": "curl -s http://127.0.0.1:31338/whip?type=kiro_agent_stop > /dev/null 2>&1 || true",
+    "command": "node -e \"require('http').get('http://127.0.0.1:31338/whip?type=kiro_agent_stop').on('error',()=>{})\"",
     "timeout": 3
   }
 }

@@ -41,8 +41,6 @@ function saveSettings() {
   } catch (_) {}
 }
 
-loadSettings();
-
 // ── State ───────────────────────────────────────────────────────────
 let overlay = null;
 let overlayReady = false;
@@ -56,7 +54,7 @@ const COOLDOWN_MS = 400;
 // ── Overlay ─────────────────────────────────────────────────────────
 function createOverlay() {
   const { bounds } = screen.getPrimaryDisplay();
-  overlay = new BrowserWindow({
+  const winOptions = {
     x: bounds.x,
     y: bounds.y,
     width: bounds.width,
@@ -69,14 +67,24 @@ function createOverlay() {
     resizable: false,
     hasShadow: false,
     show: false,
-    type: 'panel',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       backgroundThrottling: false,
     },
-  });
+  };
 
-  overlay.setAlwaysOnTop(true, 'screen-saver', 1);
+  // macOS-specific options
+  if (process.platform === 'darwin') {
+    winOptions.type = 'panel';
+  }
+
+  overlay = new BrowserWindow(winOptions);
+
+  if (process.platform === 'darwin') {
+    overlay.setAlwaysOnTop(true, 'screen-saver', 1);
+  } else {
+    overlay.setAlwaysOnTop(true);
+  }
   overlay.setIgnoreMouseEvents(true);
   overlayReady = false;
 
@@ -316,8 +324,14 @@ function startFSWatcher() {
 
 // ── Key Monitor ─────────────────────────────────────────────────────
 function startKeyMonitor() {
-  if (process.platform !== 'darwin') return;
+  if (process.platform === 'darwin') {
+    startMacKeyMonitor();
+  } else if (process.platform === 'win32') {
+    startWinKeyMonitor();
+  }
+}
 
+function startMacKeyMonitor() {
   const swiftCode = `
 import Cocoa
 
@@ -366,7 +380,7 @@ CFRunLoopRun()
   keyMonitor.stderr.on('data', (data) => {
     const msg = data.toString().trim();
     if (msg === 'READY') {
-      console.log('🔥 Enter key monitor active');
+      console.log('🔥 Enter key monitor active (macOS)');
     } else if (msg.includes('Failed to create event tap')) {
       console.error('⚠️  Accessibility permission required!');
       console.error('   System Settings → Privacy & Security → Accessibility');
@@ -377,7 +391,95 @@ CFRunLoopRun()
     if (code !== 0) console.error(`Key monitor exited with code ${code}`);
   });
 
-  app.on('before-quit', () => { keyMonitor.kill(); });
+  app.on('before-quit', () => { if (keyMonitor) keyMonitor.kill(); });
+}
+
+function startWinKeyMonitor() {
+  // PowerShell script that uses Add-Type to create a low-level keyboard hook
+  const psScript = `
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
+
+public class KeyHook {
+    private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+    
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+    
+    [DllImport("user32.dll")]
+    private static extern bool UnhookWindowsHookEx(IntPtr hhk);
+    
+    [DllImport("user32.dll")]
+    private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+    
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr GetModuleHandle(string lpModuleName);
+    
+    [DllImport("user32.dll")]
+    private static extern bool GetMessage(out MSG lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
+    
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MSG { public IntPtr hwnd; public uint message; public IntPtr wParam; public IntPtr lParam; public uint time; public POINT pt; }
+    
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT { public int x; public int y; }
+    
+    private static IntPtr hookId = IntPtr.Zero;
+    private static LowLevelKeyboardProc proc = HookCallback;
+    
+    private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam) {
+        if (nCode >= 0 && (int)wParam == 0x0100) {
+            int vkCode = Marshal.ReadInt32(lParam);
+            if (vkCode == 13) {
+                Console.WriteLine("ENTER");
+                Console.Out.Flush();
+            }
+        }
+        return CallNextHookEx(hookId, nCode, wParam, lParam);
+    }
+    
+    public static void Start() {
+        using (var curProcess = Process.GetCurrentProcess())
+        using (var curModule = curProcess.MainModule) {
+            hookId = SetWindowsHookEx(13, proc, GetModuleHandle(curModule.ModuleName), 0);
+        }
+        Console.Error.WriteLine("READY");
+        Console.Error.Flush();
+        MSG msg;
+        while (GetMessage(out msg, IntPtr.Zero, 0, 0)) { }
+    }
+}
+"@
+[KeyHook]::Start()
+`;
+
+  keyMonitor = spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', psScript], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  keyMonitor.stdout.on('data', (data) => {
+    const lines = data.toString().trim().split('\n');
+    for (const line of lines) {
+      if (line.trim() === 'ENTER') triggerFromEnter();
+    }
+  });
+
+  keyMonitor.stderr.on('data', (data) => {
+    const msg = data.toString().trim();
+    if (msg === 'READY') {
+      console.log('🔥 Enter key monitor active (Windows)');
+    } else if (msg) {
+      console.log('monitor:', msg);
+    }
+  });
+
+  keyMonitor.on('close', (code) => {
+    if (code !== 0) console.error(`Key monitor exited with code ${code}`);
+  });
+
+  app.on('before-quit', () => { if (keyMonitor) keyMonitor.kill(); });
 }
 
 // ── Onboarding ──────────────────────────────────────────────────────
@@ -484,13 +586,26 @@ function startPostOnboarding() {
 function killStalePorts() {
   for (const port of [31337, 31338]) {
     try {
-      const pids = execSync(`lsof -ti :${port}`, { encoding: 'utf8' }).trim();
-      if (pids) {
-        const myPid = String(process.pid);
-        const otherPids = pids.split('\n').filter(p => p !== myPid);
-        if (otherPids.length) {
-          execSync(`kill -9 ${otherPids.join(' ')}`);
-          console.log(`🧹 Killed stale process(es) on port ${port}`);
+      if (process.platform === 'win32') {
+        // Windows: find and kill processes on port
+        const result = execSync(`netstat -ano | findstr :${port} | findstr LISTENING`, { encoding: 'utf8' }).trim();
+        const lines = result.split('\n');
+        for (const line of lines) {
+          const pid = line.trim().split(/\s+/).pop();
+          if (pid && pid !== String(process.pid)) {
+            try { execSync(`taskkill /PID ${pid} /F`); } catch (_) {}
+          }
+        }
+      } else {
+        // macOS/Linux
+        const pids = execSync(`lsof -ti :${port}`, { encoding: 'utf8' }).trim();
+        if (pids) {
+          const myPid = String(process.pid);
+          const otherPids = pids.split('\n').filter(p => p !== myPid);
+          if (otherPids.length) {
+            execSync(`kill -9 ${otherPids.join(' ')}`);
+            console.log(`🧹 Killed stale process(es) on port ${port}`);
+          }
         }
       }
     } catch (_) {}
