@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" width="120" />
+  <img src="assets/icons/logo.png" width="120" />
 </p>
 
 <h1 align="center">Whip Me Bad</h1>
@@ -151,6 +151,10 @@ Electron · Canvas 2D · Web Audio API · Supabase · macOS CGEventTap
 ## Privacy
 
 Anonymous usage tracking only — device UUID, whip count, trigger type, platform. No personal data. No accounts. See [`analytics.js`](analytics.js).
+
+## Inspiration
+
+Inspired by [OpenWhip](https://github.com/GitFrog1111/OpenWhip) — the OG whip-your-AI tool. We took the concept further with dreamy visuals, Kiro integration, streak mode, analytics, and a cinematic onboarding experience.
 
 ## License
 

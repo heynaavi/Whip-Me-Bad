@@ -83,8 +83,8 @@ let prevHandleX = 0, prevHandleY = 0;
 // ═══════════════════════════════════════════════════════════════════════
 //  AUDIO — preloaded with pooling to prevent memory leaks
 // ═══════════════════════════════════════════════════════════════════════
-const slapAudio = new Audio('slap.mp3');
-const whooshAudio = new Audio('whoosh.mp3');
+const slapAudio = new Audio('../assets/sounds/slap.mp3');
+const whooshAudio = new Audio('../assets/sounds/whoosh.mp3');
 slapAudio.preload = 'auto';
 whooshAudio.preload = 'auto';
 slapAudio.load();
@@ -97,8 +97,8 @@ const whooshPool = [];
 let slapIdx = 0, whooshIdx = 0;
 
 for (let i = 0; i < POOL_SIZE; i++) {
-  const s = new Audio('slap.mp3'); s.preload = 'auto'; s.load();
-  const w = new Audio('whoosh.mp3'); w.preload = 'auto'; w.load();
+  const s = new Audio('../assets/sounds/slap.mp3'); s.preload = 'auto'; s.load();
+  const w = new Audio('../assets/sounds/whoosh.mp3'); w.preload = 'auto'; w.load();
   slapPool.push(s);
   whooshPool.push(w);
 }

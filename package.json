@@ -18,7 +18,7 @@
     "productName": "Whip Me Bad",
     "mac": {
       "category": "public.app-category.developer-tools",
-      "icon": "logo.png",
+      "icon": "assets/icons/logo.png",
       "target": [
         "dmg",
         "zip"
@@ -51,30 +51,17 @@
       "target": [
         "nsis"
       ],
-      "icon": "logo.ico"
+      "icon": "assets/icons/logo-256.png"
     },
     "nsis": {
       "oneClick": true,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": false,
-      "installerIcon": "logo.ico",
-      "uninstallerIcon": "logo.ico"
+      "allowToChangeInstallationDirectory": false
     },
     "files": [
       "main.js",
-      "preload.js",
-      "overlay.html",
-      "onboarding.html",
-      "insights.html",
-      "hook-installer.js",
-      "analytics.js",
-      "trigger.js",
-      "tray-icon.png",
-      "Tray-icon.png",
-      "logo.png",
-      "logo.ico",
-      "slap.mp3",
-      "whoosh.mp3",
+      "src/**/*",
+      "assets/**/*",
       "hooks/**/*"
     ],
     "extraResources": [

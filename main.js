@@ -6,8 +6,8 @@ const { spawn, execSync } = require('child_process');
 const dgram = require('dgram');
 const http = require('http');
 const fs = require('fs');
-const { startAutoInstaller, stopAutoInstaller, installInDirectory } = require('./hook-installer');
-const { initAnalytics, stopAnalytics, track } = require('./analytics');
+const { startAutoInstaller, stopAutoInstaller, installInDirectory } = require('./src/hook-installer');
+const { initAnalytics, stopAnalytics, track } = require('./src/analytics');
 
 // ── Settings persistence ────────────────────────────────────────────
 let SETTINGS_PATH = '';
@@ -68,7 +68,7 @@ function createOverlay() {
     hasShadow: false,
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'src', 'preload.js'),
       backgroundThrottling: false,
     },
   };
@@ -88,7 +88,7 @@ function createOverlay() {
   overlay.setIgnoreMouseEvents(true);
   overlayReady = false;
 
-  overlay.loadFile('overlay.html');
+  overlay.loadFile('src/overlay.html');
   overlay.webContents.on('did-finish-load', () => {
     overlay.showInactive();
     overlay.webContents.send('warmup');
@@ -284,7 +284,7 @@ function updateTray() {
 
 function createTray() {
   try {
-    const iconPath = path.join(__dirname, 'Tray-icon.png');
+    const iconPath = path.join(__dirname, 'assets', 'icons', 'Tray-icon.png');
     const icon = nativeImage.createFromPath(iconPath);
     icon.setTemplateImage(false);
     tray = new Tray(icon);
@@ -486,7 +486,7 @@ public class KeyHook {
 
 function showInsights() {
   if (insightsWin) { insightsWin.focus(); return; }
-  const { getStats } = require('./analytics');
+  const { getStats } = require('./src/analytics');
   const stats = getStats();
 
   insightsWin = new BrowserWindow({
@@ -499,11 +499,11 @@ function showInsights() {
     resizable: false,
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'src', 'preload.js'),
     },
   });
 
-  insightsWin.loadFile('insights.html', {
+  insightsWin.loadFile('src/insights.html', {
     query: { device: stats.deviceId },
   });
   insightsWin.once('ready-to-show', () => insightsWin.show());
@@ -533,13 +533,13 @@ function showOnboarding() {
     backgroundColor: '#00000000',
     show: false,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'src', 'preload.js'),
       backgroundThrottling: false,
     },
   });
 
   onboardingWin.setAlwaysOnTop(true, 'screen-saver');
-  onboardingWin.loadFile('onboarding.html');
+  onboardingWin.loadFile('src/onboarding.html');
   onboardingWin.once('ready-to-show', () => {
     onboardingWin.show();
   });
