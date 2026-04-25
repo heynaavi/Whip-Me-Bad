@@ -56,14 +56,14 @@ It's dumb. It's beautiful. It works.
 
 | Platform | Download |
 |----------|----------|
-| macOS | [Whip Me Bad.dmg](https://github.com/user/whip-me-bad/releases/latest) |
-| Windows | [Whip Me Bad Setup.exe](https://github.com/user/whip-me-bad/releases/latest) |
+| macOS | [Whip Me Bad.dmg](https://github.com/Naveen701372/Whip-Me-Bad/releases/latest) |
+| Windows | [Whip Me Bad Setup.exe](https://github.com/Naveen701372/Whip-Me-Bad/releases/latest) |
 
 ## Install from source
 
 ```bash
-git clone https://github.com/user/whip-me-bad.git
-cd whip-me-bad
+git clone https://github.com/Naveen701372/Whip-Me-Bad.git
+cd Whip-Me-Bad
 npm install
 npm start
 ```
