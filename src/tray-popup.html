@@ -76,7 +76,12 @@
 
   /* ── Row group ── */
   .group{background:var(--bg-elevated);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+  .group-header{display:flex;align-items:center;justify-content:space-between}
   .group-label{font-size:10px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.06em}
+  .reset-btn{font-size:9px;font-weight:500;color:var(--text-tertiary);background:none;border:none;
+    cursor:pointer;padding:2px 6px;border-radius:4px;transition:all .1s;font-family:'Inter',sans-serif;
+    display:inline-flex;align-items:center;gap:3px}
+  .reset-btn:hover{color:var(--accent-text);background:var(--accent-soft)}
 
   /* ── Volume ── */
   .vol-row{display:flex;align-items:center;gap:8px}
@@ -156,6 +161,9 @@
     <span class="sound-file" id="whooshFile">Default</span>
     <button class="icon-btn" onclick="previewSound('whoosh')" title="Preview">▶</button>
     <button class="icon-btn" onclick="bridge.send('change-whoosh')" title="Change">✎</button>
+    <button class="icon-btn" onclick="resetOneSound('whoosh')" title="Reset">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+    </button>
   </div>
   <div class="sound-item">
     <span class="sound-dot"></span>
@@ -163,6 +171,9 @@
     <span class="sound-file" id="slapFile">Default</span>
     <button class="icon-btn" onclick="previewSound('slap')" title="Preview">▶</button>
     <button class="icon-btn" onclick="bridge.send('change-slap')" title="Change">✎</button>
+    <button class="icon-btn" onclick="resetOneSound('slap')" title="Reset">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+    </button>
   </div>
 </div>
 
@@ -172,6 +183,9 @@
     <span class="key-pill" id="keyBadge">Enter</span>
     <span class="trigger-label">Global hotkey</span>
     <button class="icon-btn" onclick="bridge.send('change-key')" title="Change key">✎</button>
+    <button class="icon-btn" onclick="resetTrigger()" title="Reset to Enter">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+    </button>
   </div>
 </div>
 
@@ -245,6 +259,22 @@ function changeVolume(val) {
   document.getElementById('volVal').textContent = val + '%';
   currentSettings.volume = parseInt(val) / 100;
   ipcRenderer.send('set-volume-setting', parseInt(val) / 100);
+}
+
+function resetSounds() {
+  ipcRenderer.send('reset-sounds');
+  document.getElementById('whooshFile').textContent = 'Default';
+  document.getElementById('slapFile').textContent = 'Default';
+}
+
+function resetOneSound(type) {
+  ipcRenderer.send('reset-one-sound', type);
+  document.getElementById(type === 'whoosh' ? 'whooshFile' : 'slapFile').textContent = 'Default';
+}
+
+function resetTrigger() {
+  ipcRenderer.send('reset-trigger');
+  document.getElementById('keyBadge').textContent = 'Enter';
 }
 </script>
 </body>

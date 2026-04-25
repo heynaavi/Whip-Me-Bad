@@ -273,6 +273,30 @@ ipcMain.on('quit-app', () => {
   app.quit();
 });
 
+ipcMain.on('reset-sounds', () => {
+  settings.customWhoosh = '';
+  settings.customSlap = '';
+  saveSettings();
+  sendSoundPaths();
+});
+
+ipcMain.on('reset-one-sound', (_, type) => {
+  if (type === 'whoosh') settings.customWhoosh = '';
+  else if (type === 'slap') settings.customSlap = '';
+  saveSettings();
+  sendSoundPaths();
+});
+
+ipcMain.on('reset-trigger', () => {
+  settings.triggerKey = 'Enter';
+  settings.triggerKeyCode = 36;
+  settings.triggerVkCode = 13;
+  settings.enterTrigger = true;
+  saveSettings();
+  if (keyMonitor) { keyMonitor.kill(); keyMonitor = null; }
+  startKeyMonitor();
+});
+
 function updateTray() {
   if (tray) {
     tray.setToolTip(settings.paused ? 'Whip Me Bad (Paused)' : 'Whip Me Bad 🍑');
