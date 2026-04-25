@@ -5,7 +5,7 @@
 <h1 align="center">Whip Me Bad</h1>
 
 <p align="center">
-  <em>A satisfying whip crack every time your AI does something</em>
+  <em>A tight whip crack every time your AI does something</em>
 </p>
 
 <p align="center">

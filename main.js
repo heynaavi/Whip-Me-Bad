@@ -17,6 +17,11 @@ const defaults = {
   volume: 0.85,
   watchFolder: path.join(require('os').homedir(), 'Dev'),
   enterTrigger: true,
+  triggerKey: 'Enter',       // key name for display
+  triggerKeyCode: 36,        // macOS keycode (36=Return, 76=NumpadEnter)
+  triggerVkCode: 13,         // Windows virtual key code (13=Enter)
+  customWhoosh: '',          // path to custom whoosh mp3 (empty = default)
+  customSlap: '',            // path to custom slap mp3 (empty = default)
 };
 
 let settings = { ...defaults };
@@ -199,11 +204,63 @@ function buildTrayMenu() {
     },
     { type: 'separator' },
     {
-      label: settings.enterTrigger ? '⌨️  Enter Key: On' : '⌨️  Enter Key: Off',
+      label: settings.enterTrigger ? `⌨️  Trigger Key: ${settings.triggerKey}` : '⌨️  Trigger Key: Off',
+      submenu: [
+        {
+          label: 'Change Key...',
+          click: () => showKeyCapture(),
+        },
+        {
+          label: settings.enterTrigger ? 'Disable' : 'Enable',
+          click: () => {
+            settings.enterTrigger = !settings.enterTrigger;
+            saveSettings();
+            updateTray();
+          },
+        },
+      ],
+    },
+    { type: 'separator' },
+    {
+      label: `🔊 Whoosh: ${settings.customWhoosh ? path.basename(settings.customWhoosh) : 'Default'}`,
+      click: async () => {
+        const result = await dialog.showOpenDialog({
+          title: 'Choose whoosh sound',
+          filters: [{ name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'm4a'] }],
+          properties: ['openFile'],
+        });
+        if (!result.canceled && result.filePaths.length > 0) {
+          settings.customWhoosh = result.filePaths[0];
+          saveSettings();
+          updateTray();
+          sendSoundPaths();
+        }
+      },
+    },
+    {
+      label: `🔊 Slap: ${settings.customSlap ? path.basename(settings.customSlap) : 'Default'}`,
+      click: async () => {
+        const result = await dialog.showOpenDialog({
+          title: 'Choose slap sound',
+          filters: [{ name: 'Audio', extensions: ['mp3', 'wav', 'ogg', 'm4a'] }],
+          properties: ['openFile'],
+        });
+        if (!result.canceled && result.filePaths.length > 0) {
+          settings.customSlap = result.filePaths[0];
+          saveSettings();
+          updateTray();
+          sendSoundPaths();
+        }
+      },
+    },
+    {
+      label: '🔄 Reset Sounds to Default',
       click: () => {
-        settings.enterTrigger = !settings.enterTrigger;
+        settings.customWhoosh = '';
+        settings.customSlap = '';
         saveSettings();
         updateTray();
+        sendSoundPaths();
       },
     },
     { type: 'separator' },
@@ -332,6 +389,8 @@ function startKeyMonitor() {
 }
 
 function startMacKeyMonitor() {
+  const keyCode1 = settings.triggerKeyCode || 36;
+  const keyCode2 = keyCode1 === 36 ? 76 : keyCode1; // 76=NumpadEnter if main is Enter
   const swiftCode = `
 import Cocoa
 
@@ -345,8 +404,8 @@ guard let tap = CGEvent.tapCreate(
   callback: { (proxy, type, event, refcon) -> Unmanaged<CGEvent>? in
     if type == .keyDown {
       let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-      if keyCode == 36 || keyCode == 76 {
-        print("ENTER", terminator: "\\n")
+      if keyCode == ${keyCode1} || keyCode == ${keyCode2} {
+        print("TRIGGER", terminator: "\\n")
         fflush(stdout)
       }
     }
@@ -373,14 +432,14 @@ CFRunLoopRun()
   keyMonitor.stdout.on('data', (data) => {
     const lines = data.toString().trim().split('\n');
     for (const line of lines) {
-      if (line === 'ENTER') triggerFromEnter();
+      if (line === 'TRIGGER') triggerFromEnter();
     }
   });
 
   keyMonitor.stderr.on('data', (data) => {
     const msg = data.toString().trim();
     if (msg === 'READY') {
-      console.log('🔥 Enter key monitor active (macOS)');
+      console.log(`🔥 Key monitor active (macOS) — trigger: ${settings.triggerKey}`);
     } else if (msg.includes('Failed to create event tap')) {
       console.error('⚠️  Accessibility permission required!');
       console.error('   System Settings → Privacy & Security → Accessibility');
@@ -395,7 +454,7 @@ CFRunLoopRun()
 }
 
 function startWinKeyMonitor() {
-  // PowerShell script that uses Add-Type to create a low-level keyboard hook
+  const vkCode = settings.triggerVkCode || 13;
   const psScript = `
 Add-Type @"
 using System;
@@ -432,8 +491,8 @@ public class KeyHook {
     private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam) {
         if (nCode >= 0 && (int)wParam == 0x0100) {
             int vkCode = Marshal.ReadInt32(lParam);
-            if (vkCode == 13) {
-                Console.WriteLine("ENTER");
+            if (vkCode == ${vkCode}) {
+                Console.WriteLine("TRIGGER");
                 Console.Out.Flush();
             }
         }
@@ -462,14 +521,14 @@ public class KeyHook {
   keyMonitor.stdout.on('data', (data) => {
     const lines = data.toString().trim().split('\n');
     for (const line of lines) {
-      if (line.trim() === 'ENTER') triggerFromEnter();
+      if (line.trim() === 'TRIGGER') triggerFromEnter();
     }
   });
 
   keyMonitor.stderr.on('data', (data) => {
     const msg = data.toString().trim();
     if (msg === 'READY') {
-      console.log('🔥 Enter key monitor active (Windows)');
+      console.log(`🔥 Key monitor active (Windows) — trigger: ${settings.triggerKey}`);
     } else if (msg) {
       console.log('monitor:', msg);
     }
@@ -579,8 +638,108 @@ function startPostOnboarding() {
   startTriggerListeners();
   startAutoInstaller();
   startFSWatcher();
+  // Send custom sound paths to overlay after it's ready
+  const waitForOverlay = setInterval(() => {
+    if (overlayReady) {
+      clearInterval(waitForOverlay);
+      sendSoundPaths();
+    }
+  }, 200);
   console.log('🍑 Whip Me Bad is running!');
 }
+
+function sendSoundPaths() {
+  if (overlay && overlayReady) {
+    overlay.webContents.send('set-sounds', {
+      whoosh: settings.customWhoosh || '',
+      slap: settings.customSlap || '',
+    });
+  }
+}
+
+// ── Key Capture Window ──────────────────────────────────────────────
+let keyCaptureWin = null;
+
+function showKeyCapture() {
+  if (keyCaptureWin) { keyCaptureWin.focus(); return; }
+
+  keyCaptureWin = new BrowserWindow({
+    width: 340,
+    height: 200,
+    center: true,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    alwaysOnTop: true,
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, 'src', 'preload.js'),
+    },
+  });
+
+  keyCaptureWin.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
+    <!DOCTYPE html><html><head>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{background:rgba(12,10,16,0.95);color:#fff;font-family:'DM Sans',sans-serif;
+        display:flex;align-items:center;justify-content:center;height:100vh;
+        flex-direction:column;-webkit-app-region:drag;border-radius:16px}
+      h2{font-size:18px;font-weight:600;color:rgba(255,240,220,.9);margin-bottom:8px}
+      p{font-size:13px;color:rgba(255,200,150,.4);margin-bottom:20px}
+      .key{font-size:24px;font-weight:700;color:rgba(255,180,100,.8);
+        background:rgba(255,120,30,.1);padding:12px 32px;border-radius:12px;
+        min-width:80px;text-align:center}
+      .hint{font-size:11px;color:rgba(255,200,150,.25);margin-top:12px}
+    </style></head><body>
+    <h2>Press a key</h2>
+    <p>This will be your whip trigger</p>
+    <div class="key" id="key">...</div>
+    <div class="hint">Press Escape to cancel</div>
+    <script>
+      document.addEventListener('keydown', (e) => {
+        e.preventDefault();
+        if (e.key === 'Escape') {
+          window.bridge.keyCaptured(null);
+          return;
+        }
+        document.getElementById('key').textContent = e.key === ' ' ? 'Space' : e.key;
+        window.bridge.keyCaptured({
+          key: e.key === ' ' ? 'Space' : e.key,
+          keyCode: e.keyCode,
+          code: e.code,
+        });
+      });
+    </script></body></html>
+  `)}`);
+
+  keyCaptureWin.once('ready-to-show', () => keyCaptureWin.show());
+  keyCaptureWin.on('closed', () => { keyCaptureWin = null; });
+}
+
+ipcMain.on('key-captured', (_, data) => {
+  if (keyCaptureWin) {
+    keyCaptureWin.close();
+    keyCaptureWin = null;
+  }
+  if (data) {
+    settings.triggerKey = data.key;
+    // Map common keys to macOS keycodes
+    const macKeyCodes = { Enter: 36, Space: 49, Tab: 48, Backspace: 51 };
+    const winVkCodes = { Enter: 13, Space: 32, Tab: 9, Backspace: 8 };
+    settings.triggerKeyCode = macKeyCodes[data.key] || data.keyCode;
+    settings.triggerVkCode = winVkCodes[data.key] || data.keyCode;
+    settings.enterTrigger = true;
+    saveSettings();
+    updateTray();
+    // Restart key monitor with new key
+    if (keyMonitor) {
+      keyMonitor.kill();
+      keyMonitor = null;
+    }
+    startKeyMonitor();
+  }
+});
 
 // ── Kill stale ports ────────────────────────────────────────────────
 function killStalePorts() {

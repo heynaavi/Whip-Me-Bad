@@ -83,25 +83,30 @@ let prevHandleX = 0, prevHandleY = 0;
 // ═══════════════════════════════════════════════════════════════════════
 //  AUDIO — preloaded with pooling to prevent memory leaks
 // ═══════════════════════════════════════════════════════════════════════
-const slapAudio = new Audio('../assets/sounds/slap.mp3');
-const whooshAudio = new Audio('../assets/sounds/whoosh.mp3');
-slapAudio.preload = 'auto';
-whooshAudio.preload = 'auto';
-slapAudio.load();
-whooshAudio.load();
+const DEFAULT_SLAP = '../assets/sounds/slap.mp3';
+const DEFAULT_WHOOSH = '../assets/sounds/whoosh.mp3';
+let currentSlapSrc = DEFAULT_SLAP;
+let currentWhooshSrc = DEFAULT_WHOOSH;
 
-// Audio pool — reuse elements instead of cloneNode leak
 const POOL_SIZE = 4;
-const slapPool = [];
-const whooshPool = [];
+let slapPool = [];
+let whooshPool = [];
 let slapIdx = 0, whooshIdx = 0;
 
-for (let i = 0; i < POOL_SIZE; i++) {
-  const s = new Audio('../assets/sounds/slap.mp3'); s.preload = 'auto'; s.load();
-  const w = new Audio('../assets/sounds/whoosh.mp3'); w.preload = 'auto'; w.load();
-  slapPool.push(s);
-  whooshPool.push(w);
+function buildPool(src) {
+  const pool = [];
+  for (let i = 0; i < POOL_SIZE; i++) {
+    const a = new Audio(src); a.preload = 'auto'; a.load();
+    pool.push(a);
+  }
+  return pool;
 }
+
+function initAudioPools() {
+  slapPool = buildPool(currentSlapSrc);
+  whooshPool = buildPool(currentWhooshSrc);
+}
+initAudioPools();
 
 function playWhooshSound() {
   const a = whooshPool[whooshIdx % POOL_SIZE];
@@ -947,6 +952,14 @@ let masterVolume = 0.85;
 
 window.bridge.onSetVolume((vol) => {
   masterVolume = vol;
+});
+
+window.bridge.onSetSounds((paths) => {
+  if (paths.whoosh) currentWhooshSrc = paths.whoosh;
+  else currentWhooshSrc = DEFAULT_WHOOSH;
+  if (paths.slap) currentSlapSrc = paths.slap;
+  else currentSlapSrc = DEFAULT_SLAP;
+  initAudioPools();
 });
 
 window.bridge.onTriggerWhip(() => {
