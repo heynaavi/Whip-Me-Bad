@@ -1,45 +1,61 @@
 <p align="center">
   <img src="assets/icons/logo.png" width="80" />
-  <br><br>
-  <strong>Whip Me Bad</strong>
-  <br>
+</p>
+
+<h1 align="center">Whip Me Bad</h1>
+
+<p align="center">
   <sub>Your AI just got a little spicier</sub>
 </p>
 
 <p align="center">
-  <a href="https://github.com/heynaavi/Whip-Me-Bad/releases/latest"><img src="https://img.shields.io/github/v/release/heynaavi/Whip-Me-Bad?style=flat-square&color=e8734a" alt="Release"></a>
-  <a href="https://www.npmjs.com/package/whip-me-bad"><img src="https://img.shields.io/npm/v/whip-me-bad?style=flat-square&color=e8734a" alt="npm"></a>
-  <img src="https://img.shields.io/badge/macOS%20%7C%20Windows-grey?style=flat-square" alt="Platform">
-  <img src="https://img.shields.io/github/license/heynaavi/Whip-Me-Bad?style=flat-square" alt="License">
+  <a href="https://github.com/heynaavi/Whip-Me-Bad/releases/latest"><img src="https://img.shields.io/github/v/release/heynaavi/Whip-Me-Bad?style=flat-square&color=e8734a" /></a>
+  <a href="https://www.npmjs.com/package/whip-me-bad"><img src="https://img.shields.io/npm/v/whip-me-bad?style=flat-square&color=e8734a" /></a>
+  <img src="https://img.shields.io/badge/macOS%20·%20Windows-grey?style=flat-square" />
+  <img src="https://img.shields.io/github/license/heynaavi/Whip-Me-Bad?style=flat-square" />
 </p>
+
+<br>
+
+<p align="center">
+  <img src="assets/demo.gif" width="600" />
+</p>
+
+<br>
+
+A dreamy neon whip cracks across your screen — with a satisfying slap — every time you press Enter or your AI does something.
 
 ---
 
-A dreamy neon whip cracks across your screen every time you press Enter or your AI does something. Satisfying slap included.
-
-## Install
+### Install
 
 ```bash
 npm install -g whip-me-bad && whip-me-bad
 ```
 
-Or [download the app](https://github.com/heynaavi/Whip-Me-Bad/releases/latest) → macOS `.dmg` · Windows `.exe`
+Or grab the app → [macOS `.dmg`](https://github.com/heynaavi/Whip-Me-Bad/releases/latest) · [Windows `.exe`](https://github.com/heynaavi/Whip-Me-Bad/releases/latest)
 
-## What it does
+---
 
-- **Press Enter anywhere** → whip 🍑
-- **Use Kiro?** → hooks auto-install, whips on prompts · edits · tasks · agent stop
-- **Mash Enter** → phrases escalate
-- **Menu bar** → pause · volume · custom sounds · custom hotkey · insights
+### How it works
 
-## Streaks & Personas
+| | |
+|:--|:--|
+| 🍑 **Enter key** | Press Enter anywhere. Get whipped. |
+| 🔗 **Kiro** | Hooks auto-install. Fires on prompts · edits · tasks · agent stop. |
+| 🔥 **Streaks** | Mash Enter. Phrases escalate. |
+| ⚙️ **Menu bar** | Pause · volume · custom sounds · custom hotkey · insights. |
+
+---
+
+### Streaks & Personas
 
 <table>
 <tr>
 <td>
 
-| Hits | Vibe |
-|:-----|:-----|
+| Hits | |
+|:-----|:--|
 | 1–2 | *spank that code* |
 | 3–5 | *HARDER, FASTER* |
 | 6–9 | *right there* |
@@ -49,8 +65,8 @@ Or [download the app](https://github.com/heynaavi/Whip-Me-Bad/releases/latest) �
 </td>
 <td>
 
-| Whips | Title |
-|:------|:------|
+| Whips | |
+|:------|:--|
 | 0 | 🥚 Fresh Egg |
 | 50 | 🍑 Cheeky One |
 | 100 | ⚡ Speed Demon |
@@ -61,45 +77,49 @@ Or [download the app](https://github.com/heynaavi/Whip-Me-Bad/releases/latest) �
 </tr>
 </table>
 
-## Contribute
+---
 
-The app listens on `localhost:31338/whip`. Any tool that can hit that endpoint works.
+### Contribute
+
+The app listens on `localhost:31338/whip` — any tool that can hit that endpoint works.
 
 | IDE | Status |
 |:----|:-------|
 | [Kiro](https://kiro.dev) | ✅ Auto-installed |
 | Cursor · Windsurf · VS Code | 🔲 PRs welcome |
 
-Ideas: new animations · sound packs · Linux support · more IDE integrations
+Want to help? → animations · sound packs · Linux · more IDEs
 
-## Build from source
+---
+
+### Build from source
 
 ```bash
 git clone https://github.com/heynaavi/Whip-Me-Bad.git
 cd Whip-Me-Bad && npm install && npm start
 ```
 
-```bash
-npm run build        # macOS
-npm run build:win    # Windows
-npm run build:all    # both
-```
+Package: `npm run build` (macOS) · `npm run build:win` (Windows) · `npm run build:all` (both)
 
-## Roadmap
+---
 
-- [x] Neon whip with audio
+### Roadmap
+
+- [x] Neon whip + audio
 - [x] Kiro hooks
 - [x] Streak mode
 - [x] Menu bar + custom sounds/hotkey
-- [x] Onboarding
+- [x] Cinematic onboarding
 - [x] Insights + personas
 - [x] Windows
 - [ ] More IDEs
 - [ ] Linux
 - [ ] Sound packs
 
-## Inspiration
+---
 
-[OpenWhip](https://github.com/GitFrog1111/OpenWhip) — the OG
-
-<p align="center"><sub>MIT · built with love and questionable judgment 🍑</sub></p>
+<p align="center">
+  Inspired by <a href="https://github.com/GitFrog1111/OpenWhip">OpenWhip</a>
+  <br>
+  <sub>MIT · built with love and questionable judgment 🍑</sub>
+</p>

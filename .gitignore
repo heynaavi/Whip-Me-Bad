@@ -6,4 +6,5 @@ graphify-out/
 *.dmg
 *.exe
 *.AppImage
+*.mov
 .DS_Store

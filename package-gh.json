@@ -1,0 +1,104 @@
+{
+  "name": "@heynaavi/whip-me-bad",
+  "version": "1.1.0",
+  "description": "Your AI just got a little spicier 🍑",
+  "author": "Naveen <naveen@whipmebad.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/heynaavi/Whip-Me-Bad.git"
+  },
+  "homepage": "https://github.com/heynaavi/Whip-Me-Bad",
+  "keywords": [
+    "whip",
+    "ai",
+    "kiro",
+    "electron",
+    "overlay",
+    "animation",
+    "developer-tools"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "main": "main.js",
+  "bin": {
+    "whip-me-bad": "bin/whip-me-bad.js"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "build": "electron-builder --mac",
+    "build:dmg": "electron-builder --mac dmg",
+    "build:zip": "electron-builder --mac zip",
+    "build:win": "electron-builder --win",
+    "build:all": "electron-builder --mac --win"
+  },
+  "build": {
+    "appId": "com.whipmebad.app",
+    "productName": "Whip Me Bad",
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "assets/icons/logo.png",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "extendInfo": {
+        "LSUIElement": true
+      }
+    },
+    "dmg": {
+      "title": "Whip Me Bad",
+      "backgroundColor": "#0a0608",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "assets/icons/logo-256.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Whip Me Bad"
+    },
+    "files": [
+      "main.js",
+      "src/**/*",
+      "assets/**/*",
+      "hooks/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "hooks",
+        "to": "hooks"
+      }
+    ]
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  }
+}
