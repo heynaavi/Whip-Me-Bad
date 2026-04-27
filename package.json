@@ -1,6 +1,6 @@
 {
   "name": "whip-me-bad",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Your AI just got a little spicier 🍑",
   "author": "Naveen <naveen@whipmebad.com>",
   "license": "MIT",
@@ -17,7 +17,14 @@
   "bin": {
     "whip-me-bad": "bin/whip-me-bad.js"
   },
+  "files": [
+    "bin/",
+    "scripts/",
+    "hooks/",
+    "README.md"
+  ],
   "scripts": {
+    "postinstall": "node scripts/postinstall.js",
     "start": "electron .",
     "dev": "electron .",
     "build": "electron-builder --mac",

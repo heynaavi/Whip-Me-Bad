@@ -11,9 +11,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
-      - run: npm publish
+      - run: |
+          # Remove "main" field so npm doesn't auto-include main.js (it's the Electron entry, not needed in npm package)
+          node -e "
+            const pkg = require('./package.json');
+            delete pkg.main;
+            require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
+          npm publish --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.HEYNAAVI_GIT_NPM }}
 
@@ -26,16 +33,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           registry-url: 'https://npm.pkg.github.com'
           scope: '@heynaavi'
       - run: |
-          # Temporarily scope the package for GitHub Packages
+          # Temporarily scope the package for GitHub Packages + strip main.js
           node -e "
             const pkg = require('./package.json');
             pkg.name = '@heynaavi/whip-me-bad';
+            delete pkg.main;
             require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));
           "
-          npm publish
+          npm publish --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
