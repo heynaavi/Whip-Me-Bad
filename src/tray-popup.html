@@ -130,6 +130,24 @@
   }
   .foot-btn:hover{color:var(--text-secondary);background:var(--bg-elevated)}
   .foot-btn.danger:hover{color:var(--danger)}
+
+  /* ── Toggle switch ── */
+  .switch-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+  .switch-label{font-size:11px;color:var(--text-secondary)}
+  .switch{
+    position:relative;width:36px;height:20px;border-radius:10px;
+    background:var(--slider-track);cursor:pointer;transition:all .2s;border:none;
+  }
+  .switch.on{background:var(--accent)}
+  .switch::after{
+    content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;
+    border-radius:50%;background:#fff;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);
+  }
+  .switch.on::after{left:18px}
+
+  /* ── Keyboard focus ── */
+  *:focus{outline:2px solid var(--accent);outline-offset:2px}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -186,6 +204,22 @@
     <button class="icon-btn" onclick="resetTrigger()" title="Reset to Enter">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
     </button>
+  </div>
+</div>
+
+<div class="group">
+  <div class="group-label">Accessibility</div>
+  <div class="switch-row">
+    <span class="switch-label">Reduced motion</span>
+    <button class="switch" id="reducedMotionSwitch" onclick="toggleReducedMotion()"></button>
+  </div>
+</div>
+
+<div class="group">
+  <div class="group-label">Privacy</div>
+  <div class="switch-row">
+    <span class="switch-label">Anonymous analytics</span>
+    <button class="switch" id="analyticsSwitch" onclick="toggleAnalytics()"></button>
   </div>
 </div>
 
@@ -247,6 +281,15 @@ ipcRenderer.on('init-settings', (_, s) => {
   // Login state
   loginEnabled = s.openAtLogin || false;
   updateLoginBtn();
+
+  // Toggle states
+  const rmSwitch = document.getElementById('reducedMotionSwitch');
+  if (s.reducedMotion) rmSwitch.classList.add('on');
+  else rmSwitch.classList.remove('on');
+
+  const anSwitch = document.getElementById('analyticsSwitch');
+  if (s.analyticsConsent) anSwitch.classList.add('on');
+  else anSwitch.classList.remove('on');
 });
 
 function togglePause() {
@@ -297,6 +340,18 @@ function resetOneSound(type) {
 function resetTrigger() {
   ipcRenderer.send('reset-trigger');
   document.getElementById('keyBadge').textContent = 'Enter';
+}
+
+function toggleReducedMotion() {
+  const sw = document.getElementById('reducedMotionSwitch');
+  const enabled = sw.classList.toggle('on');
+  ipcRenderer.send('set-reduced-motion', enabled);
+}
+
+function toggleAnalytics() {
+  const sw = document.getElementById('analyticsSwitch');
+  const enabled = sw.classList.toggle('on');
+  ipcRenderer.send('set-analytics-consent', enabled);
 }
 </script>
 </body>

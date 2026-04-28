@@ -22,6 +22,11 @@ let queue = [];
 let deviceId = '';
 let sessionId = '';
 let totalSlaps = 0;
+let analyticsEnabled = false; // Requires explicit opt-in consent
+
+function setAnalyticsEnabled(enabled) {
+  analyticsEnabled = enabled;
+}
 
 function uuid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -53,6 +58,7 @@ function saveQueue() {
 }
 
 function track(triggerType, meta) {
+  if (!analyticsEnabled) return;
   totalSlaps++;
   const event = {
     device_id: deviceId,
@@ -68,6 +74,7 @@ function track(triggerType, meta) {
 }
 
 function trackEvent(eventType, meta) {
+  if (!analyticsEnabled) return;
   queue.push({
     device_id: deviceId,
     session_id: sessionId,
@@ -98,6 +105,11 @@ function detectKiro() {
 
 async function flush() {
   if (queue.length === 0) return;
+  if (!analyticsEnabled) {
+    queue = []; // Drop events if analytics not enabled
+    saveQueue();
+    return;
+  }
   const batch = queue.splice(0, 50);
   console.log(`📊 Flushing ${batch.length} events via edge function...`);
 
@@ -155,7 +167,8 @@ function supabaseInsert(rows) {
 
 let flushTimer = null;
 
-function initAnalytics() {
+function initAnalytics(consentGiven = false) {
+  analyticsEnabled = consentGiven;
   QUEUE_PATH = path.join(app.getPath('userData'), 'analytics-queue.json');
   DEVICE_PATH = path.join(app.getPath('userData'), 'device-id.txt');
   deviceId = getDeviceId();
@@ -176,7 +189,7 @@ function stopAnalytics() {
 }
 
 function getStats() {
-  return { totalSlaps, queueSize: queue.length, deviceId, sessionId };
+  return { totalSlaps, queueSize: queue.length, deviceId, sessionId, analyticsEnabled };
 }
 
-module.exports = { initAnalytics, stopAnalytics, track, trackEvent, detectKiro, flush, getStats };
+module.exports = { initAnalytics, stopAnalytics, track, trackEvent, detectKiro, flush, getStats, setAnalyticsEnabled };

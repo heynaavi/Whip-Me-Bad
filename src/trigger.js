@@ -6,7 +6,7 @@
 const http = require('http');
 const dgram = require('dgram');
 
-const req = http.get('http://127.0.0.1:31338/whip', { timeout: 500 }, (res) => {
+const req = http.get('http://127.0.0.1:31338/whip', { timeout: 500 }, (_res) => {
   console.log('⚡ Whip triggered! (HTTP)');
 });
 

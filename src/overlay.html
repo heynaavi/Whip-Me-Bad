@@ -74,6 +74,11 @@ let particles = [];
 let sparks = [];
 let dreamMotes = [];
 let screenShake = { x: 0, y: 0 };
+let reducedMotion = false;
+
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  reducedMotion = true;
+}
 let shakeIntensity = 0;
 let dropTimer = 0;
 let trailPoints = [];
@@ -828,6 +833,29 @@ function triggerAnimation() {
   dropTimer = 0;
 }
 
+function simplifiedWhip() {
+  const startPos = getHandlePos(0);
+  handleX = startPos.x;
+  handleY = startPos.y;
+
+  whip = spawnWhip(handleX, handleY);
+  phase = 'animating';
+  animFrame = 0;
+  cracked = true;
+  particles = [];
+  sparks = [];
+  dreamMotes = [];
+  trailPoints = [];
+  shakeIntensity = 0;
+  textDisplay = { text: pendingLabel || 'WHIP!', x: handleX + 200, y: handleY - 100, alpha: 1, scale: 1 };
+  dropTimer = 0;
+
+  setTimeout(() => {
+    phase = 'done';
+    setTimeout(() => { phase = 'idle'; }, 500);
+  }, 800);
+}
+
 function update() {
   globalFrame++;
   if (phase === 'idle' || phase === 'done') return;
@@ -910,9 +938,21 @@ function draw() {
   drawText();
 }
 
+let shouldRender = true;
+
 function loop() {
+  if (!shouldRender) {
+    shouldRender = phase !== 'idle' && phase !== 'done';
+    if (!shouldRender) {
+      requestAnimationFrame(loop);
+      return;
+    }
+  }
   update();
   draw();
+  if (phase === 'idle' || phase === 'done') {
+    shouldRender = false;
+  }
   requestAnimationFrame(loop);
 }
 loop();
@@ -923,25 +963,33 @@ loop();
 // ═══════════════════════════════════════════════════════════════════════
 
 window.bridge.onWarmup(() => {
-  // Run a full animation cycle — physics, particles, all draw calls
-  triggerAnimation();
+  if (reducedMotion) {
+    simplifiedWhip();
+    for (let i = 0; i < 20; i++) {
+      update();
+      draw();
+    }
+    phase = 'idle';
+    whip = null;
+    textDisplay = null;
+  } else {
+    triggerAnimation();
 
-  // Fast-forward through entire animation + drop phase
-  for (let i = 0; i < TOTAL_ANIM_FRAMES + 50; i++) {
-    update();
-    draw(); // actually draw to prime canvas GPU shaders/paths
+    for (let i = 0; i < TOTAL_ANIM_FRAMES + 50; i++) {
+      update();
+      draw();
+    }
+
+    phase = 'idle';
+    whip = null;
+    particles = [];
+    sparks = [];
+    dreamMotes = [];
+    trailPoints = [];
+    shakeIntensity = 0;
+    screenShake = { x: 0, y: 0 };
+    textDisplay = null;
   }
-
-  // Reset everything clean
-  phase = 'idle';
-  whip = null;
-  particles = [];
-  sparks = [];
-  dreamMotes = [];
-  trailPoints = [];
-  shakeIntensity = 0;
-  screenShake = { x: 0, y: 0 };
-  textDisplay = null;
   ctx.clearRect(0, 0, W, H);
 
   // Warm audio pool — zero-volume play forces full decode
@@ -979,8 +1027,16 @@ let pendingLabel = '';
 window.bridge.onTriggerWhip((label) => {
   console.log('🎬 Overlay received trigger-whip — label:', label);
   pendingLabel = label || '';
-  playWhooshSound();
-  setTimeout(triggerAnimation, 250);
+  if (reducedMotion) {
+    simplifiedWhip();
+  } else {
+    playWhooshSound();
+    setTimeout(triggerAnimation, 250);
+  }
+});
+
+window.bridge.onSetReducedMotion((enabled) => {
+  reducedMotion = enabled;
 });
 
 </script>

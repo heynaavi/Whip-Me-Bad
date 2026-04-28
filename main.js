@@ -1,13 +1,26 @@
 const {
-  app, BrowserWindow, ipcMain, screen, Tray, Menu, nativeImage, dialog, shell
+  app, BrowserWindow, ipcMain, screen, Tray, nativeImage, dialog
 } = require('electron');
 const path = require('path');
 const { spawn, execSync } = require('child_process');
 const dgram = require('dgram');
 const http = require('http');
 const fs = require('fs');
+const log = require('electron-log');
 const { startAutoInstaller, stopAutoInstaller, installInDirectory } = require('./src/hook-installer');
-const { initAnalytics, stopAnalytics, track, trackEvent } = require('./src/analytics');
+const { initAnalytics, stopAnalytics, track, trackEvent, setAnalyticsEnabled } = require('./src/analytics');
+
+log.transports.file.level = 'info';
+log.transports.console.level = 'debug';
+log.catchErrors({ showDialog: false });
+
+process.on('uncaughtException', (err) => {
+  log.error('Uncaught exception:', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  log.error('Unhandled rejection:', reason);
+});
 
 // ── Settings persistence ────────────────────────────────────────────
 let SETTINGS_PATH = '';
@@ -22,6 +35,8 @@ const defaults = {
   triggerVkCode: 13,         // Windows virtual key code (13=Enter)
   customWhoosh: '',          // path to custom whoosh mp3 (empty = default)
   customSlap: '',            // path to custom slap mp3 (empty = default)
+  analyticsConsent: false,       // GDPR: opt-in consent for analytics
+  reducedMotion: false,        // Accessibility: reduced motion preference
 };
 
 let settings = { ...defaults };
@@ -43,7 +58,9 @@ function saveSettings() {
   try {
     fs.mkdirSync(path.dirname(SETTINGS_PATH), { recursive: true });
     fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
-  } catch (_) {}
+  } catch {
+    // Ignore save errors
+  }
 }
 
 // ── State ───────────────────────────────────────────────────────────
@@ -210,6 +227,8 @@ function showTrayPopup() {
       triggerKey: settings.triggerKey,
       enterTrigger: settings.enterTrigger,
       openAtLogin: app.getLoginItemSettings().openAtLogin,
+      analyticsConsent: settings.analyticsConsent,
+      reducedMotion: settings.reducedMotion,
     });
   });
 
@@ -308,6 +327,22 @@ ipcMain.on('reset-trigger', () => {
   trackEvent('setting_change', { setting: 'trigger_key', value: 'reset' });
   if (keyMonitor) { keyMonitor.kill(); keyMonitor = null; }
   startKeyMonitor();
+});
+
+ipcMain.on('set-analytics-consent', (_, enabled) => {
+  settings.analyticsConsent = enabled;
+  setAnalyticsEnabled(enabled);
+  saveSettings();
+  trackEvent('setting_change', { setting: 'analytics_consent', value: enabled });
+});
+
+ipcMain.on('set-reduced-motion', (_, enabled) => {
+  settings.reducedMotion = enabled;
+  saveSettings();
+  if (overlay && overlayReady) {
+    overlay.webContents.send('set-reduced-motion', enabled);
+  }
+  trackEvent('setting_change', { setting: 'reduced_motion', value: enabled });
 });
 
 function updateTray() {
@@ -416,18 +451,38 @@ CFRunLoopRun()
   keyMonitor.stderr.on('data', (data) => {
     const msg = data.toString().trim();
     if (msg === 'READY') {
-      console.log(`🔥 Key monitor active (macOS) — trigger: ${settings.triggerKey}`);
+      log.info(`Key monitor active (macOS) — trigger: ${settings.triggerKey}`);
     } else if (msg.includes('Failed to create event tap')) {
-      console.error('⚠️  Accessibility permission required!');
-      console.error('   System Settings → Privacy & Security → Accessibility');
+      log.warn('Accessibility permission required');
+      showAccessibilityPermissionDialog();
     }
   });
 
   keyMonitor.on('close', (code) => {
-    if (code !== 0) console.error(`Key monitor exited with code ${code}`);
+    if (code !== 0) log.warn(`Key monitor exited with code ${code}`);
   });
 
   app.on('before-quit', () => { if (keyMonitor) keyMonitor.kill(); });
+}
+
+function showAccessibilityPermissionDialog() {
+  dialog.showMessageBox({
+    type: 'warning',
+    buttons: ['Open System Settings', 'Continue Anyway', 'Disable Enter Trigger'],
+    defaultId: 0,
+    cancelId: 1,
+    title: 'Accessibility Permission Required',
+    message: 'Whip Me Bad needs Accessibility permission to detect the Enter key.',
+    detail: 'Without this permission, the app cannot trigger whips when you press Enter.\n\nYou can grant permission in System Settings → Privacy & Security → Accessibility.',
+  }).then((result) => {
+    if (result.response === 0) {
+      spawn('open', ['x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility']);
+    } else if (result.response === 2) {
+      settings.enterTrigger = false;
+      saveSettings();
+      log.info('Enter trigger disabled due to missing permission');
+    }
+  });
 }
 
 function startWinKeyMonitor() {
@@ -604,9 +659,14 @@ ipcMain.on('onboarding-done', () => {
     onboardingWin.close();
     onboardingWin = null;
   }
-  // Hide dock again — back to menu bar only
   if (process.platform === 'darwin') app.dock.hide();
   startPostOnboarding();
+});
+
+ipcMain.on('set-analytics-consent-from-onboarding', (_, enabled) => {
+  settings.analyticsConsent = enabled;
+  setAnalyticsEnabled(enabled);
+  saveSettings();
 });
 
 function startPostOnboarding() {
@@ -745,7 +805,9 @@ function killStalePorts() {
           }
         }
       }
-    } catch (_) {}
+    } catch {
+      // Ignore errors when killing stale processes
+    }
   }
 }
 
@@ -802,7 +864,7 @@ app.whenReady().then(() => {
   if (process.platform === 'darwin') app.dock.hide();
 
   initSettings();
-  initAnalytics();
+  initAnalytics(settings.analyticsConsent);
   killStalePorts();
   
   try { createTray(); } catch(e) { console.error('Tray error:', e); }

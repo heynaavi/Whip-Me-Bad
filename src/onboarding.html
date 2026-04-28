@@ -313,7 +313,24 @@ const pages=[
       <button class="skip" onclick="finish()">skip →</button>
     </div>`,
 
-  // 3: Done — peach flies to tray position
+  // 3: Consent — GDPR opt-in
+  ()=>`<h1 style="font-size:28px;margin-bottom:20px">Help us improve</h1>
+    <div style="font-size:14px;color:rgba(255,200,150,.5);margin-bottom:24px;line-height:1.6;max-width:340px">
+      Send anonymous usage data to help us understand how Whip Me Bad is used. No personal info is ever collected.
+    </div>
+    <label style="display:flex;align-items:center;gap:12px;margin-bottom:28px;cursor:pointer">
+      <input type="checkbox" id="consentCheck" style="width:20px;height:20px;accent-color:rgba(255,120,30,.8)">
+      <span style="font-size:14px;color:rgba(255,220,180,.8)">Yes, send anonymous stats</span>
+    </label>
+    <div style="display:flex;gap:12px;align-items:center;justify-content:center">
+      <button class="btn" onclick="finishWithConsent()">Continue</button>
+      <button class="skip" onclick="finishWithConsent()">skip →</button>
+    </div>
+    <div style="font-size:11px;color:rgba(255,200,150,.2);margin-top:16px">
+      You can change this anytime in settings
+    </div>`,
+
+  // 4: Done — peach flies to tray position
   ()=>`<span id="finalPeach" style="font-size:80px;display:block;margin-bottom:16px;
     filter:drop-shadow(0 0 50px rgba(255,120,30,.5)) drop-shadow(0 0 100px rgba(255,55,85,.25));
     animation:hov 4s ease-in-out infinite">🍑</span>
@@ -500,6 +517,12 @@ function finish(){
   setTimeout(()=>window.bridge.onboardingDone(),7000);
 }
 
+function finishWithConsent(){
+  const consent = document.getElementById('consentCheck')?.checked || false;
+  window.bridge.setAnalyticsConsent(consent);
+  finish();
+}
+
 window.bridge.onFolderPicked((p)=>{
   if(p){const el=document.getElementById('folder-path');if(el)el.textContent='✅ '+p}
 });
@@ -508,9 +531,10 @@ document.addEventListener('keydown',(e)=>{
   if(e.key==='Enter'){
     if(cur===0)next();
     else if(cur===1&&!enterDone)simulateEnter();
-    else if(cur===2)finish();
+    else if(cur===2)next();
+    else if(cur===3)finishWithConsent();
   }
-  if(e.key==='ArrowRight'){if(cur===2)finish();else next()}
+  if(e.key==='ArrowRight'){if(cur===3)finishWithConsent();else next()}
 });
 
 // ── Entrance ──
