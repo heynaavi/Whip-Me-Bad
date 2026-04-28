@@ -88,7 +88,7 @@ The app listens on `localhost:31338/whip` — any tool that can hit that endpoin
 | [Kiro](https://kiro.dev) | ✅ Auto-installed |
 | Cursor · Windsurf · VS Code | 🔲 PRs welcome |
 
-Want to help? → animations · sound packs · Linux · more IDEs
+Want to help? → animations · sound packs · Linux · more IDEs · [read the contributing guide](CONTRIBUTING.md)
 
 ---
 

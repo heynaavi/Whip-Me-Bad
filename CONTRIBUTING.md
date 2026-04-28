@@ -118,15 +118,40 @@ The pattern is identical for any IDE that supports hook/event systems. Swap the 
 
 ---
 
-## What we need most (priority order)
+## What we need most
 
-| IDE | What to hook into |
+| IDE / Platform | What to hook into |
 |---|---|
-| Cursor | `.cursor/rules` or settings-based onPrompt / onSave events |
+| Cursor | Keybindings, task runner, or extension — no native hook system yet |
 | VS Code | `tasks.json`, `keybindings.json`, or a lightweight extension |
-| Windsurf | Similar to Cursor — event hooks in settings |
-| Linux | Any shell-based trigger, systemd, or daemon |
+| Windsurf | Event hooks in settings (similar to Cursor) |
+| JetBrains | File Watchers, External Tools, or a plugin |
+| Neovim | `autocmd` events (e.g. `BufWritePost`, `CmdlineLeave`) |
 | Sound packs | Drop new `.wav`/`.mp3` files into `assets/sounds/` + update the menu |
+
+---
+
+## Local dev setup
+
+```bash
+git clone https://github.com/heynaavi/Whip-Me-Bad.git
+cd Whip-Me-Bad
+npm install
+npm start
+```
+
+This runs the Electron app locally. You'll need Node 18+ and npm 9+.
+
+To build distributable binaries:
+
+```bash
+npm run build:dmg     # macOS DMG
+npm run build:zip     # macOS ZIP (used by npm postinstall)
+npm run build:win     # Windows installer + portable EXE
+npm run build:all     # Everything
+```
+
+Outputs go to `dist/`.
 
 ---
 

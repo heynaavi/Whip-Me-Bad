@@ -108,12 +108,13 @@ function createOverlay() {
 
 // ── Trigger logic ───────────────────────────────────────────────────
 function triggerWhip(label) {
-  if (settings.paused) return;
-  if (cooldown || !overlayReady) return;
+  if (settings.paused) return false;
+  if (cooldown || !overlayReady) return false;
   cooldown = true;
   setTimeout(() => { cooldown = false; }, COOLDOWN_MS);
   overlay.webContents.send('set-volume', settings.volume);
   overlay.webContents.send('trigger-whip', label || '');
+  return true;
 }
 
 let enterTimer = null;
@@ -124,8 +125,9 @@ function triggerFromEnter() {
   if (enterTimer) clearTimeout(enterTimer);
   enterTimer = setTimeout(() => {
     enterTimer = null;
-    triggerWhip('');
-    track('enter');
+    if (triggerWhip('')) {
+      track('enter');
+    }
   }, 300);
 }
 
@@ -137,8 +139,9 @@ function triggerFromHook(hookType, label) {
   }
   // Only fire if not in cooldown (prevents double from rapid hooks)
   if (cooldown) return;
-  triggerWhip(label);
-  track(hookType || 'kiro_hook');
+  if (triggerWhip(label)) {
+    track(hookType || 'kiro_hook');
+  }
 }
 
 // ── IPC ─────────────────────────────────────────────────────────────
