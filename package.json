@@ -1,6 +1,6 @@
 {
   "name": "whip-me-bad",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Your AI just got a little spicier 🍑",
   "author": "Naveen <naveen@whipmebad.com>",
   "license": "MIT",
@@ -9,7 +9,26 @@
     "url": "https://github.com/heynaavi/Whip-Me-Bad.git"
   },
   "homepage": "https://github.com/heynaavi/Whip-Me-Bad",
-  "keywords": ["whip", "ai", "kiro", "cursor", "windsurf", "vscode", "electron", "overlay", "animation", "developer-tools", "fun", "productivity", "streak", "sound", "npm", "nodejs", "menubar", "hotkey"],
+  "keywords": [
+    "whip",
+    "ai",
+    "kiro",
+    "cursor",
+    "windsurf",
+    "vscode",
+    "electron",
+    "overlay",
+    "animation",
+    "developer-tools",
+    "fun",
+    "productivity",
+    "streak",
+    "sound",
+    "npm",
+    "nodejs",
+    "menubar",
+    "hotkey"
+  ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },
